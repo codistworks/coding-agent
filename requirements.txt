@@ -1,0 +1,29 @@
+# Core
+crewai==0.83.0
+crewai-tools==0.17.0
+
+# Fix Intel Mac compatibility
+chromadb >=0.5.18
+lancedb==0.17.0
+onnxruntime==1.18.1
+
+# Embedchain ecosystem
+embedchain==0.1.126
+
+# LangChain stack
+langchain==0.3.14
+langchain-community==0.3.14
+langchain-openai==0.2.14
+
+# OpenAI
+openai==1.58.1
+
+# Vector DB
+tokenizers==0.20.3
+tiktoken<0.8
+
+# Misc
+numpy<2
+pydantic<2.11
+
+setuptools==75.8.0
