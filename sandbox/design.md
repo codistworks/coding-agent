@@ -1,159 +1,67 @@
-```markdown
-# Account Management System Design
+### System Design
+The system will consist of a single backend module `account_management.py` and a Gradio app `app.py`. The `account_management.py` module will contain the business logic for the account management system, while the `app.py` will provide a user interface to interact with the system.
 
-## Modules and Responsibilities
+#### Backend Module (`account_management.py`)
+The backend module will contain the following classes and functions:
 
-### Backend Module (backend.py)
-- **Assigned to:** backend_engineer
+* `Account` class:
+	+ `__init__(self, balance: float)`: Initializes an account with a given balance.
+	+ `deposit(self, amount: float)`: Deposits a given amount into the account.
+	+ `withdraw(self, amount: float)`: Withdraws a given amount from the account, if possible.
+	+ `buy_shares(self, symbol: str, quantity: int)`: Buys a given quantity of shares of a given symbol, if affordable.
+	+ `sell_shares(self, symbol: str, quantity: int)`: Sells a given quantity of shares of a given symbol, if available.
+	+ `get_holdings(self)`: Returns the current holdings of the account.
+	+ `get_portfolio_value(self)`: Returns the current total value of the account's portfolio.
+	+ `get_profit_loss(self)`: Returns the current profit or loss of the account.
+	+ `get_transaction_history(self)`: Returns the transaction history of the account.
+* `get_share_price(symbol: str)`: Returns the current price of a share (this function is already provided).
 
-#### Classes and Functions
+#### Frontend Module (`app.py`)
+The frontend module will use Gradio to create a user interface for the account management system. The Gradio app will have the following components:
 
-##### `Account`
-Represents a user's trading account.
+* `create_account`: A function that creates a new account with a given initial balance.
+* `deposit_funds`: A function that deposits a given amount into the account.
+* `withdraw_funds`: A function that withdraws a given amount from the account.
+* `buy_shares`: A function that buys a given quantity of shares of a given symbol.
+* `sell_shares`: A function that sells a given quantity of shares of a given symbol.
+* `get_holdings`: A function that returns the current holdings of the account.
+* `get_portfolio_value`: A function that returns the current total value of the account's portfolio.
+* `get_profit_loss`: A function that returns the current profit or loss of the account.
+* `get_transaction_history`: A function that returns the transaction history of the account.
 
-- **Attributes:**
-  - `user_id: str`
-  - `balance: float`
-  - `holdings: dict[str, int]`  # Maps share symbols to quantities
-  - `transactions: list[Transaction]`
-  - `initial_deposit: float`
+The Gradio app will use the following Gradio components:
 
-- **Methods:**
-  ```python
-  def __init__(self, user_id: str, initial_deposit: float)
-  def deposit(self, amount: float) -> None
-  def withdraw(self, amount: float) -> None
-  def buy_share(self, symbol: str, quantity: int) -> None
-  def sell_share(self, symbol: str, quantity: int) -> None
-  def get_holdings(self) -> dict[str, int]
-  def get_transactions(self) -> list[Transaction]
-  def get_portfolio_value(self) -> float
-  def get_profit_loss(self) -> float
-  def get_balance(self) -> float
-  ```
+* `gr.Interface`: To create the user interface.
+* `gr.Number`: To input numbers (e.g. balance, amount, quantity).
+* `gr.Textbox`: To input text (e.g. symbol).
+* `gr.Dropdown`: To select from a list of options (e.g. buy/sell).
+* `gr.Button`: To perform actions (e.g. create account, deposit funds).
 
-##### `Transaction`
-Represents a transaction record.
+The frontend engineer should use the latest Gradio 6 APIs, which have changes from earlier versions. Specifically, the `gr.Interface` component now requires a `fn` parameter, which is a function that takes the input values and returns the output values.
 
-- **Attributes:**
-  - `user_id: str`
-  - `timestamp: datetime`
-  - `type: str`  # "buy" or "sell"
-  - `symbol: str`
-  - `quantity: int`
-  - `price: float`
-  - `total_cost: float`
+#### Unit Tests (`test_account_management.py`)
+The test engineer will write unit tests for the backend module using the `unittest` framework. The tests will cover the following scenarios:
 
-- **Methods:**
-  ```python
-  def __init__(self, user_id: str, timestamp: datetime, type: str, symbol: str, quantity: int, price: float, total_cost: float)
-  ```
+* Creating a new account with a given initial balance.
+* Depositing funds into the account.
+* Withdrawing funds from the account.
+* Buying shares of a given symbol.
+* Selling shares of a given symbol.
+* Getting the current holdings of the account.
+* Getting the current total value of the account's portfolio.
+* Getting the current profit or loss of the account.
+* Getting the transaction history of the account.
 
-##### `get_share_price(symbol: str) -> float`
-- Returns current price for given symbol (test implementation returns fixed prices for AAPL, TSLA, GOOGL).
+The test engineer should use the `unittest.TestCase` class to define test cases, and the `assert` statement to verify the expected behavior.
 
----
+### Assignments
 
-### Frontend Module (frontend.py)
-- **Assigned to:** frontend_engineer
-- **Gradio 6 API Guidance:**
-  - Use `gr.Blocks()` for app layout
-  - Use `gr.Dropdown(options=["AAPL", "TSLA", "GOOGL"])` for share selection
-  - Use `gr.Numberbox()` for quantity inputs
-  - Use `gr.Button()` for action triggers
-  - Use `gr.Textbox()` or `gr.JSON()` for displaying transactions
-  - Use `gr.Accordion()` or `gr.Tab()` for organizing UI sections
-  - Use `with gr.Blocks() as demo:` for app structure
-  - Use `gr.datetime()` for timestamp display
-  - Callbacks should use `def callback_function(input_components) -> output_components:` syntax
-  - Error handling: Use try/except in callbacks and update error message components
+* `backend_engineer`: Write the backend Python code in `account_management.py`.
+* `frontend_engineer`: Create the Gradio app in `app.py`.
+* `test_engineer`: Write unit tests for the backend module in `test_account_management.py`.
 
-##### Key UI Components
-- Account creation form
-- Deposit/withdrawal forms
-- Buy/sell forms with share symbol dropdown
-- Portfolio value display
-- Holdings display
-- Transactions list
-- Profit/loss display
-- Error message area
+### Notes
 
-##### Example Gradio Callback
-```python
-with demo.form as form:
-    with gr.Tab("Buy Shares"):
-        symbol_input = gr.Dropdown(choices=["AAPL", "TSLA", "GOOGL"])
-        quantity_input = gr.Numberbox(label="Quantity", decimal Places=0)
-        buy_btn = gr.Button("Buy")
-        error_msg = gr.Textbox(label="Error", lines=3)
-        
-        def buy_handler(symbol, quantity):
-            # Call backend buy_share, handle exceptions
-            return error_msg_value
-        
-        buy_btn.click(fn=buy_handler, inputs=[symbol_input, quantity_input], outputs=[error_msg])
-```
-
----
-
-### Test Module (test_backend.py)
-- **Assigned to:** test_engineer
-- **Test Coverage Requirements:**
-  - Account creation and initialization
-  - Deposit and withdrawal logic
-  - Buy share validation (price check, quantity)
-  - Sell share validation (sufficient holdings)
-  - Portfolio value calculation
-  - Profit/loss calculation
-  - Transaction history recording
-  - Error handling (insufficient funds/shares)
-
-##### Test Classes
-```python
-import unittest
-from backend import Account, get_share_price
-
-class TestAccountFunctionality(unittest.TestCase):
-    def setUp(self):
-        self.account = Account("test_user", 1000.0)
-    
-    def test_initial_deposit(self):
-        self.assertEqual(self.account.get_balance(), 1000.0)
-    
-    def test_deposit(self):
-        self.account.deposit(500.0)
-        self.assertEqual(self.account.get_balance(), 1500.0)
-    
-    # Additional tests for all key methods
-    def test_insufficient_withdraw(self):
-        with self.assertRaises(ValueError):
-            self.account.withdraw(1500.0)
-    
-    def test_buy_share(self):
-        self.account.buy_share("AAPL", 1)
-        self.assertEqual(self.account.get_balance(), 1000.0 - get_share_price("AAPL"))
-    
-    # Add similar tests for all scenarios
-```
-
----
-
-## System Workflow
-1. User creates account with initial deposit
-2. User can perform actions via frontend UI:
-   - Deposit funds
-   - Withdraw funds
-   - Buy shares (validated against current balance)
-   - Sell shares (validated against holdings)
-3. Backend tracks:
-   - Balance changes
-   - Share holdings
-   - Transaction history
-4. Frontend displays:
-   - Current portfolio value
-   - Holdings
-   - Profit/loss
-   - Transaction history
-5. System prevents invalid operations through backend validation
-6. Tests verify all business rules and edge cases
-```
+* The `get_share_price` function is already provided and will be used by the backend module to get the current price of a share.
+* The Gradio app will use the latest Gradio 6 APIs, which have changes from earlier versions.
+* The unit tests will cover the expected behavior of the backend module, including error cases (e.g. insufficient funds, invalid symbol).
