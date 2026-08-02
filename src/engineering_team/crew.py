@@ -10,11 +10,12 @@ import os
 
 from crewai import LLM
 
-
 llm = LLM(
     model="nvidia_nim/meta/llama-3.3-70b-instruct",
-    api_key=os.environ["NVIDIA_API_KEY_NEMOTRON"],   # your NVIDIA build.nvidia.com API key
-    base_url="https://integrate.api.nvidia.com/v1",  # optional, this is the default anyway
+    api_key=os.environ["NVIDIA_API_KEY_LLAMA"],
+    base_url="https://integrate.api.nvidia.com/v1",
+    num_retries=3,
+    timeout=120,
 )
 
 
@@ -84,4 +85,10 @@ class EngineeringTeam():
 
     @crew
     def crew(self) -> Crew:
-        return Crew(agents=self.agents, tasks=self.tasks, process=Process.sequential, verbose=True)
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True,
+            max_rpm=25,
+        )

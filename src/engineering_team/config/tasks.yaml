@@ -23,37 +23,107 @@ code_task:
     IMPORTANT: Use your file-writing tool to save the code to {module_name} in the sandbox directory.
     Call the tool ONCE with ONE file — never pass a list/array of multiple files in a single Action Input.
     The saved content must be raw Python only, no markdown fences.
-    After writing, use your Code Interpreter tool to actually run the file and confirm it executes with no errors.
-    Do NOT claim the task is complete unless the tool output shows success — if a tool call errors, fix it and retry.
+
+    CRITICAL RULE — NO TOP-LEVEL DEMO CODE: Do not leave any module-level code that creates objects,
+    calls methods, or prints output outside of class/function definitions. This module will be imported
+    by app.py and by the test suite — any top-level demo/print code will execute every time it is
+    imported and will pollute output. If you want to self-test your code, wrap it in
+    `if __name__ == "__main__":` at the very bottom, or better, just rely on the Code Interpreter tool
+    for testing and do not save that test code into the file at all.
+
+    CRITICAL RULE — PROFIT/LOSS MUST INCLUDE HOLDINGS VALUE: get_profit_loss() (or equivalent) must NOT
+    simply return cash balance minus initial deposit. It must first compute total portfolio value
+    (cash balance + the current market value of all held shares, using get_share_price for each symbol
+    held), and then subtract the initial deposit from that total. Ignoring the value of currently held
+    shares is a bug — verify this with a manual test case where shares are bought but not fully sold,
+    and confirm the result is not negative when the account is actually profitable.
+
+    MANDATORY SELF-CHECK LOOP: After writing the file, use your Code Interpreter tool to actually run it
+    and confirm it executes with no errors. Pay special attention to f-strings — every `{` inside an
+    f-string must have a matching `}` before the closing quote. If the Code Interpreter reports ANY error,
+    including SyntaxError, read the exact error message, fix that specific line, and use your file-writing
+    tool again (overwrite=true) to save the corrected version. Repeat write → run → fix until the Code
+    Interpreter confirms the file runs with zero errors. Do NOT write a Final Answer claiming success
+    unless your own Code Interpreter tool output actually shows the code running without error.
   expected_output: >
-    Python code written to {module_name} in the sandbox, confirmed to execute without errors.
+    Python code written to {module_name} in the sandbox, confirmed via your own Code Interpreter tool run
+    to execute without errors, with no top-level demo code and a correct profit/loss calculation that
+    accounts for held shares.
   agent: backend_engineer
   context:
     - design_task
   output_file: sandbox/{module_name}
 
+
 frontend_task:
   description: >
     Write a gradio UI in a module app.py that demonstrates the backend code, as described in the design.
     Assume there is only 1 user, and have the UI be professional, polished, clean.
-    IMPORTANT: Use your file-writing tool ONCE to save app.py, then ONCE MORE to save _validate.py —
-    two separate tool calls, never a list of files in one call.
-    Then run _validate.py via your Code Interpreter tool to confirm the Blocks object constructs without error.
-    IMPORTANT: _validate.py must NOT call `.launch()`.
-    Do NOT report success unless the Code Interpreter output actually confirms it — if any tool call errors,
-    fix it and retry before finishing.
     Here are the requirements: {requirements}
 
-    IMPORTANT: Structure app.py so the Blocks/Interface object is built at module level, but only call
-    `.launch()` inside an `if __name__ == "__main__":` guard. This lets _validate.py safely `import app`
-    without launching a server, while still letting a person run `python app.py` directly to see the UI.
+    CRITICAL RULE — NO MARKDOWN: The content you pass to your file-writing tool must be 100% raw Python.
+    NEVER include the characters ``` anywhere in the content, not at the start, not at the end, not in the
+    middle, not even inside a comment. These three backtick characters are markdown syntax for chat display —
+    they are not valid Python and will cause a SyntaxError when the file is run. If you catch yourself about
+    to type ``` in the content field, stop and remove it before calling the tool.
+
+    CRITICAL RULE — COMBINING INTERFACES: If you build the UI as several separate gr.Interface objects,
+    you MUST combine them with gr.TabbedInterface, never gr.Blocks. Example:
+
+    WRONG:
+        block = gr.Blocks([interface_1, interface_2])
+
+    CORRECT:
+        block = gr.TabbedInterface(
+            [interface_1, interface_2],
+            ["Tab One", "Tab Two"]
+        )
+
+    (Alternatively, build one single UI with `with gr.Blocks() as demo:` and `gr.Tab(...)` blocks inside it —
+    either pattern is fine, but never pass a list of Interfaces directly into gr.Blocks().)
+
+    CRITICAL RULE — OUTPUTS MUST BE REAL COMPONENT VARIABLES, NEVER STRINGS: Every `outputs=` value must
+    be an actual Gradio component object that was assigned to a variable BEFORE the `.click()` call that
+    references it — never a plain string like "result".
+
+    WRONG (this will crash with AttributeError: 'str' object has no attribute '_id'):
+        my_button.click(my_fn, inputs=my_input, outputs="result")
+        gr.Textbox(label="Result")   # created after .click(), never assigned, never actually used
+
+    CORRECT — create and assign the component FIRST, then pass that variable into outputs=:
+        result_box = gr.Textbox(label="Result")
+        my_button.click(my_fn, inputs=my_input, outputs=result_box)
+
+    Apply this pattern to every single `.click()` call in the file. Before finishing, re-read your own
+    code and check every `outputs=` argument — if any of them is a quoted string instead of a variable
+    name, that is a bug and must be fixed.
+
+    CRITICAL RULE — LAUNCH GUARD: Build the interface/Blocks object at module level, but only call
+    `.launch()` inside `if __name__ == "__main__":` so the file can be safely imported without starting
+    a server.
+
+    MANDATORY SELF-CHECK LOOP: After using your file-writing tool to save app.py, you MUST use your
+    Code Interpreter tool to actually import/run the file and confirm it constructs with no errors.
+    If the Code Interpreter reports any error or traceback, read the error message carefully, fix the
+    specific problem in the code, and use your file-writing tool again (overwrite=true) to save the
+    corrected version. Repeat this write → run → fix cycle until the Code Interpreter confirms success
+    with zero errors. Do NOT write a Final Answer claiming success unless your own Code Interpreter tool
+    output actually shows the code running without error — a claim of success without a passing tool
+    result will be treated as a failed task.
+
+    Then write a separate validation script _validate.py (using your file-writing tool, ONE call, no
+    markdown fences either) that imports app.py and confirms the Blocks/TabbedInterface object constructs
+    without error. It must NOT call `.launch()`.
   expected_output: >
-    app.py and _validate.py written to the sandbox, with _validate.py confirmed to run without error.
+    app.py and _validate.py written to the sandbox as raw Python with no markdown fences, using
+    gr.TabbedInterface (not gr.Blocks with a list) and real component variable instances (never strings)
+    for all outputs, confirmed via your own Code Interpreter tool run to construct without error.
   agent: frontend_engineer
   context:
     - code_task
     - design_task
   output_file: sandbox/app.py
+
 
 test_task:
   description: >
@@ -61,10 +131,18 @@ test_task:
     Do not write tests for app.py.
     IMPORTANT: Your Code Interpreter tool cannot import from disk — copy the full backend source (given in
     context) directly into the same code block as your tests and run them together.
-    Once tests pass, use your file-writing tool ONCE to save the combined file as test_backend.py in the sandbox.
+    MANDATORY SELF-CHECK LOOP: You MUST actually run the tests via your Code Interpreter tool and read the
+    real output. "No result variable found" or any output that is not an explicit unittest summary
+    (e.g. "Ran N tests ... OK") means the tests did NOT run — you must fix your code so it actually
+    executes and produces a real pass/fail result. Never use `unittest.mock.patch()` with a bare
+    unqualified name — the string must include the module, e.g. patch('__main__.get_share_price').
+    Do NOT write a Final Answer claiming tests pass unless your own Code Interpreter tool output
+    literally shows "OK" with zero failures/errors.
+    Once tests genuinely pass, use your file-writing tool ONCE to save the combined file as test_backend.py.
     Fix any backend errors so tests pass; don't break app.py.
   expected_output: >
-    A test_backend.py file written to the sandbox, with all unit tests passing, and a summary of results.
+    A test_backend.py file written to the sandbox, with all unit tests confirmed passing via a real
+    Code Interpreter run (not a claim), and a summary of results.
   agent: test_engineer
   context:
     - code_task
